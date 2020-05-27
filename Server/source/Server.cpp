@@ -3,6 +3,10 @@
 Server::Server(unsigned short port) {
     m_running = true;
 
+    sf::IpAddress ip = sf::IpAddress::getLocalAddress();
+
+    std::cout << ip << std::endl;
+
     if (m_listener.listen(port) == sf::Socket::Done)
         std::cout << "Server is started on port: " << port << ". Waiting for clients.\n";
     else

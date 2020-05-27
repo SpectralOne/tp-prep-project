@@ -10,7 +10,8 @@
 #include "../Entities/Bullet.h"
 #include "../Entities/Enemy.h"
 #include "../Entities/Player.h"
-// #include "../GUI/Chat.h"
+#include "../Entities/HealthKit.h"
+#include "../Entities/Teleport.h"
 #include "../GUI/GUI.h"
 #include "../GUI/TabOverlay.h"
 
@@ -53,7 +54,11 @@ enum SIGNAL_RECEIVE {
     WON,
     GAME_WAIT,
     GAME_CD,
-    GAME_START
+    GAME_START,
+    HEALTHKITS,
+    TELEPORTS,
+    HEALED,
+    TELEPORTED
 };
 
 class Network {
@@ -62,6 +67,8 @@ class Network {
     void setPlayer(Player* player);
     void setEnemies(std::vector<Enemy>* enemies);
     void setBullets(std::vector<Bullet>* bullets);
+    void setHealthkits(std::vector<HealthKit>* healthkits);
+    void setTeleports(std::vector<Teleport>* teleports);
     void setTabOverlay(TabOverlay* overlay);
     void setChat(Chat* chat);
     void setGM(GUI* g) { gm = g; }
@@ -98,6 +105,8 @@ class Network {
     GUI *gm;
     std::vector<Enemy>* m_enemies;
     std::vector<Bullet>* m_bullets;
+    std::vector<HealthKit>* m_healthkits;
+    std::vector<Teleport>* m_teleports;
     TabOverlay* m_tabOVerlay;
     Chat* m_chat;
 

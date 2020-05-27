@@ -14,6 +14,8 @@ StatePlay::StatePlay(StateManager& machine, sf::RenderWindow& window, pInfo_t in
     m_network->setPlayer(&m_player);
     m_network->setEnemies(&m_enemies);
     m_network->setBullets(&m_bullets);
+    m_network->setHealthkits(&m_healthkits);
+    m_network->setTeleports(&m_teleports);
     m_network->setTabOverlay(&m_tabOverlay);
     m_network->setChat(&m_gui.chat);
     m_network->setGM(&m_gui);
@@ -168,11 +170,11 @@ void StatePlay::update(sf::Time dt) {
     for (auto& enemy : m_enemies) {
         m_tabOverlay.updatePlayer(enemy);
         enemy.m_playerAnimator.m_Sprite = &enemy.getSprite();
-        
+
         enemy.update(dt.asMilliseconds());
         enemy.interpolate(dt.asMilliseconds());
     }
-    
+
     for (auto& b : m_bullets) {
         b.update(dt.asMilliseconds());
     }
@@ -180,6 +182,9 @@ void StatePlay::update(sf::Time dt) {
     m_tabOverlay.setPosition(m_player.getPosition());
 
     updateBullets();
+    updateHealthkits();
+    updateTeleports();
+
     m_player.updateAttack();
 
     if (!m_player.isAlive() && !m_player.getSpectator()) {
@@ -212,6 +217,13 @@ void StatePlay::draw() {
 
     for (auto& bullet : m_bullets) {
         bullet.render(m_window);
+    }
+
+    for (auto& teleport : m_teleports) {
+        teleport.render(m_window);
+    }
+    for (auto& healthkit : m_healthkits) {
+        healthkit.render(m_window);
     }
 
     m_window.display();
@@ -260,21 +272,31 @@ void StatePlay::handleTextInput(sf::Uint32 code) {
     }
 }
 
-void StatePlay::updateCombat() {
-    for (int i = 0; i < m_enemies.size(); ++i) {
-        for (size_t k = 0; k < m_bullets.size(); k++) {
-            if (m_enemies[i].getSprite().getLocalBounds().intersects(m_bullets[k].getBounds())) {
-                std::cout << "Killed!\n";
-            }
-        }
-    }
-}
-
 void StatePlay::updateBullets() {
     unsigned int counter = 0;
     for (auto& b : m_bullets) {
         if (b.isExpired()) {
             m_bullets.erase(m_bullets.begin() + counter);
+        }
+        ++counter;
+    }
+}
+
+void StatePlay::updateHealthkits() {
+    unsigned int counter = 0;
+    for (auto& h : m_healthkits) {
+        if (h.isExpired()) {
+            m_healthkits.erase(m_healthkits.begin() + counter);
+        }
+        ++counter;
+    }
+}
+
+void StatePlay::updateTeleports() {
+    unsigned int counter = 0;
+    for (auto& t : m_teleports) {
+        if (t.isExpired()) {
+            m_teleports.erase(m_teleports.begin() + counter);
         }
         ++counter;
     }

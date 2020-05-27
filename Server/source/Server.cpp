@@ -15,10 +15,14 @@ Server::Server(unsigned short port) {
     m_playersConnected = 0;
     m_currentPlayerId = 0;
     curBulletId = 0;
+    curHealthkitId = 0;
+    curTeleportId = 0;
 
     t0 = std::thread(&Server::receive, this);
     t0.detach();
     curBuletsCount = 0;
+    curHealthkitsCount = 0;
+    curTeleportsCount = 0;
     game = false;
     secSince = 0.f;
     game_end = false;
@@ -251,10 +255,7 @@ void Server::update() {
                     p << bullet.code;
                     p << bullet.expired;
                 }
-                for (auto& player : *m_playerList) {
-                    // if (player.getId() != currentPlayer->getId())
-                    player.getSocket()->send(p);
-                }
+                sendAll(p);
                 break;
             }
             default:
@@ -325,51 +326,78 @@ void Server::updateTick() {
         }
     }
 
-    updateBullets();
-    updateDeadPlayers();
+    if (game) {
+        updateBullets();
+        updateHealthkits();
+        updateTeleports();
+        updateDeadPlayers();
 
-    if (m_playerList->size() > 0 && curBuletsCount) {
-        sf::Packet p;
-        p << SIGNAL_SEND::BULLET_POSITION;
-        p << int(curBuletsCount);
-        // std::cout << "curCnt : " << curBuletsCount << " == act " << m_bullets.size() << std::endl;
-        for (auto& bullet : m_bullets) {
-            p << bullet.bid;
-            p << bullet.pos.x;
-            p << bullet.pos.y;
-            p << bullet.code;
-            p << bullet.expired;
+        if (m_playerList->size() > 0 && curBuletsCount) {
+            sf::Packet p;
+            p << SIGNAL_SEND::BULLET_POSITION;
+            p << int(curBuletsCount);
+            // std::cout << "curCnt : " << curBuletsCount << " == act " << m_bullets.size() << std::endl;
+            for (auto& bullet : m_bullets) {
+                p << bullet.bid;
+                p << bullet.pos.x;
+                p << bullet.pos.y;
+                p << bullet.code;
+                p << bullet.expired;
+            }
+            sendAll(p);
         }
-        for (auto& player : *m_playerList) {
-            // if (player.getId() != currentPlayer->getId())
-            player.getSocket()->send(p);
-        }
-    }
-    removeExpiredBullets();
 
-    if (m_playerList->size() > 1) {
-        int alive = 0;
-        int id;
-        for (auto& player : *m_playerList) {
-            if (player.isAlive()) {
-                ++alive;
-                id = player.getId();
+        if (m_playerList->size() > 0 && curTeleportsCount) {
+            sf::Packet p;
+            p << SIGNAL_SEND::TELEPORTS;
+            p << int(curTeleportsCount);
+            for (auto& t : m_teleports) {
+                p << t.id;
+                p << t.pos.x;
+                p << t.pos.y;
+                p << t.expired;
             }
-            if (alive > 1) {
-                break;
-            }
+            sendAll(p);
         }
-        if (alive == 1) {
+
+        if (m_playerList->size() > 0 && curHealthkitsCount) {
+            sf::Packet p;
+            p << SIGNAL_SEND::HEALTHKITS;
+            p << int(curHealthkitsCount);
+            for (auto& hk : m_healthkits) {
+                p << hk.id;
+                p << hk.pos.x;
+                p << hk.pos.y;
+                p << hk.expired;
+            }
+            sendAll(p);
+        }
+
+        removeExpired();
+
+        if (m_playerList->size() > 1) {
+            int alive = 0;
+            int id;
             for (auto& player : *m_playerList) {
-                if (player.getId() == id) {
-                    sf::Packet p;
-                    p << SIGNAL_SEND::WON;
-                    player.getSocket()->send(p);
+                if (player.isAlive()) {
+                    ++alive;
+                    id = player.getId();
+                }
+                if (alive > 1) {
+                    break;
+                }
+            }
+            if (alive == 1) {
+                for (auto& player : *m_playerList) {
+                    if (player.getId() == id) {
+                        sf::Packet p;
+                        p << SIGNAL_SEND::WON;
+                        player.getSocket()->send(p);
+                    }
                 }
             }
         }
     }
-
     updateGame();
 }
 
@@ -422,20 +450,55 @@ void Server::updateGame() {  // std::format???
             sendAll(p);
             game_end = true;
             shufflePlayers();
+            setHealthkits();
+            setTeleports();
         }
     }
 }
 
 void Server::shufflePlayers() {
-    std::random_device dev;
-    std::mt19937 rng(dev());
-    std::uniform_int_distribution<std::mt19937::result_type> dist6(100,1000);
-    // int i = 1;
+    sf::Vector2f pos = getRandom();
     for (auto& player : *m_playerList) {
-        player.setPosition({dist6(rng), dist6(rng)});
+        player.setPosition(pos);
     }
 }
 
+void Server::setHealthkits() {
+    for (int i = 0; i < m_playerList->size() * 2; ++i) {
+        sf::Vector2f pos = getRandom();
+
+        if (!intersectsCollision(pos.x, pos.y)) {
+            m_healthkits.push_back({pos, curHealthkitId, false});
+            ++curHealthkitId;
+            ++curHealthkitsCount;
+        } else {
+            --i;
+        }
+    }
+}
+
+void Server::setTeleports() {
+    for (int i = 0; i < m_playerList->size() * 2; ++i) {
+        sf::Vector2f pos = getRandom();
+
+        if (!intersectsCollision(pos.x, pos.y)) {
+            m_teleports.push_back({pos, curTeleportId, false});
+            ++curTeleportId;
+            ++curTeleportsCount;
+        } else {
+            --i;
+        }
+    }
+}
+
+sf::Vector2f Server::getRandom() {
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> distX(100, 1500);
+    std::uniform_int_distribution<std::mt19937::result_type> distY(100, 1000);
+
+    return {distX(rng), distY(rng)};
+}
 void Server::updateBullets() {
     if (m_playerList->size() > 0 && curBuletsCount) {
         unsigned int counter = 0;
@@ -478,7 +541,48 @@ void Server::updateBullets() {
     }
 }
 
-void Server::removeExpiredBullets() {
+void Server::updateHealthkits() {
+    if (m_playerList->size() > 0 && m_healthkits.size() > 0) {
+        sf::FloatRect intersection;
+        unsigned int counter = 0;
+        for (auto& hk : m_healthkits) {
+            for (auto& player : *m_playerList) {  // segfault
+                if (sf::FloatRect(player.getPosition(), {64, 64}).intersects(sf::FloatRect(hk.pos, {64, 64}), intersection) && player.isAlive()) {
+                    player.getHeal();
+                    m_healthkits[counter].expired = true;
+
+                    sf::Packet p;
+                    p << SIGNAL_SEND::HEALED;
+                    player.getSocket()->send(p);
+                }
+            }
+            ++counter;
+        }
+    }
+}
+
+void Server::updateTeleports() {
+    if (m_playerList->size() > 0 && m_teleports.size() > 0) {
+        sf::FloatRect intersection;
+        unsigned int counter = 0;
+        for (auto& t : m_teleports) {
+            for (auto& player : *m_playerList) {  // segfault
+                if (sf::FloatRect(player.getPosition(), {64, 64}).intersects(sf::FloatRect(t.pos, {64, 64}), intersection) && player.isAlive()) {
+                    sf::Vector2f pos = getRandom();
+                    player.setPosition(pos);
+                    m_teleports[counter].expired = true;
+
+                    sf::Packet p;
+                    p << SIGNAL_SEND::TELEPORTED;
+                    player.getSocket()->send(p);
+                }
+            }
+            ++counter;
+        }
+    }
+}
+
+void Server::removeExpired() {
     std::vector<bullet_t> n;
     for (auto& b : m_bullets) {
         if (!b.expired) {
@@ -489,6 +593,28 @@ void Server::removeExpiredBullets() {
     }
     m_bullets.clear();
     m_bullets = n;
+
+    std::vector<healthkit_t> h;
+    for (auto& hk : m_healthkits) {
+        if (!hk.expired) {
+            h.push_back(hk);
+        } else {
+            --curHealthkitsCount;
+        }
+    }
+    m_healthkits.clear();
+    m_healthkits = h;
+
+    std::vector<teleport_t> t;
+    for (auto& tp : m_teleports) {
+        if (!tp.expired) {
+            t.push_back(tp);
+        } else {
+            --curTeleportsCount;
+        }
+    }
+    m_teleports.clear();
+    m_teleports = t;
 }
 
 void Server::updateDeadPlayers() {
@@ -530,4 +656,14 @@ void Server::sendAll(sf::Packet p) {
     for (auto& player : *m_playerList) {
         player.getSocket()->send(p);
     }
+}
+
+bool Server::intersectsCollision(float x, float y) {
+    sf::FloatRect intersection;
+    for (const auto& tile : m_currentLevel.getUnwalkable()) {
+        if (sf::FloatRect({x, y}, {64, 64}).intersects(sf::FloatRect(tile, {64, 64}), intersection)) {
+            return true;
+        }
+    }
+    return false;
 }

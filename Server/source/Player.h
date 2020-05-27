@@ -33,6 +33,7 @@ class Player {
     unsigned short getPing();
     int getId();
     void getDamage();
+    void getHeal();
     bool isAlive() { return alive; }
     int getKills() { return kills; }
     void setKills(int val) { kills += val; }

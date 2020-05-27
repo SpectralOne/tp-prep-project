@@ -1,8 +1,9 @@
 #include "Bullet.h"
 
-Bullet::Bullet(int id, float pos_x, float pos_y, int direction) {
-    this->shape.setTexture(AssetManager::GetTexture("res/img/3310.png"));
-    this->shape.setPosition(pos_x, pos_y);
+Bullet::Bullet(int id, float pos_x, float pos_y, int direction) : 
+    BaseEntity(id, pos_x, pos_y) {
+    shape.setTexture(AssetManager::GetTexture("res/img/3310.png"));
+    shape.setPosition(pos_x, pos_y);
     this->movementSpeed = 20.f;
     this->id = id;
     this->expired = false;
@@ -20,24 +21,8 @@ Bullet::Bullet(int id, float pos_x, float pos_y, int direction) {
     }
 }
 
-const sf::FloatRect Bullet::getBounds() const {
-    return this->shape.getGlobalBounds();
-}
-
-void Bullet::rotate(float angle) {
-    this->shape.rotate(angle);
-}
-
-int Bullet::getId() {
-    return this->id;
-}
-
 void Bullet::update(float dt) {
     interpolate(dt);
-}
-
-void Bullet::setTargetPosition(sf::Vector2f pos) {
-    target = pos;
 }
 
 void Bullet::interpolate(float dt) {
@@ -65,23 +50,6 @@ void Bullet::interpolate(float dt) {
     }
 }
 
-void Bullet::render(sf::RenderWindow& window) {
-    window.draw(this->shape);
-}
-
-sf::Vector2f Bullet::getPosition() {
-    return shape.getPosition();
-}
-sf::Sprite& Bullet::getSprite() {
-    return shape;
-}
 sf::Vector2f Bullet::getDirection() {
     return this->direction;
-}
-
-void Bullet::setExpired() {
-    this->expired = true;
-}
-bool Bullet::isExpired() {
-    return this->expired;
 }

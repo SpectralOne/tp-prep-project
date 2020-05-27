@@ -28,6 +28,14 @@ void Network::setBullets(std::vector<Bullet>* bullets) {
     this->m_bullets = bullets;
 }
 
+void Network::setHealthkits(std::vector<HealthKit>* healthkits) {
+    this->m_healthkits = healthkits;
+}
+
+void Network::setTeleports(std::vector<Teleport>* teleports) {
+    this->m_teleports = teleports;
+}
+
 void Network::setTabOverlay(TabOverlay* overlay) {
     m_tabOVerlay = overlay;
 }
@@ -296,9 +304,66 @@ void Network::receive() {
                 gm->setText(msg);
                 // display msg
             } break;
-            case SIGNAL_RECEIVE::GAME_START: { // random teleport
+            case SIGNAL_RECEIVE::GAME_START: {  // random teleport
                 m_player->setShoot(true);
-                gm->setText("Kill them all");
+            } break;
+            case SIGNAL_RECEIVE::HEALTHKITS: {
+                int num;
+                received_packet >> num;
+                for (int i = 0; i < num; ++i) {
+                    int id;
+                    sf::Vector2f pos;
+                    bool expired;
+
+                    received_packet >> id;
+                    received_packet >> pos.x >> pos.y;
+                    received_packet >> expired;
+
+                    bool create = true;
+                    for (auto& hk : *m_healthkits) {
+                        if (hk.getId() == id) {
+                            if (expired) {
+                                hk.setExpired();
+                            }
+                            create = false;
+                        }
+                    }
+                    if (create) {
+                        m_healthkits->push_back(HealthKit(id, pos.x, pos.y));
+                    }
+                }
+            } break;
+            case SIGNAL_RECEIVE::TELEPORTS: {
+                int num;
+                received_packet >> num;
+                for (int i = 0; i < num; ++i) {
+                    int id;
+                    sf::Vector2f pos;
+                    bool expired;
+
+                    received_packet >> id;
+                    received_packet >> pos.x >> pos.y;
+                    received_packet >> expired;
+
+                    bool create = true;
+                    for (auto& t : *m_teleports) {
+                        if (t.getId() == id) {
+                            if (expired) {
+                                t.setExpired();
+                            }
+                            create = false;
+                        }
+                    }
+                    if (create) {
+                        m_teleports->push_back(Teleport(id, pos.x, pos.y));
+                    }
+                }
+            } break;
+            case SIGNAL_RECEIVE::HEALED: {
+                m_player->healSound();
+            } break;
+            case SIGNAL_RECEIVE::TELEPORTED: {
+                m_player->teleportSound();
             } break;
             default:
                 std::cout << "Received unknown signal from server: " << signal << std::endl;

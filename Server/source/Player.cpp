@@ -67,6 +67,10 @@ void Player::getDamage() {
     hp > 0 ? alive = true : alive = false;
 }
 
+void Player::getHeal() {
+    hp += 10;
+}
+
 sf::Time Player::getTimeout() {
     return m_timeout;
 }

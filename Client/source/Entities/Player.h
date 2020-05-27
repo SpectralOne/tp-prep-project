@@ -41,6 +41,8 @@ class Player : public BasePlayer {
     void setSpeed(float speed);
 
     void shootSound();
+    void healSound();
+    void teleportSound();
 
    private:
     sf::Sprite m_shadow;
@@ -51,10 +53,12 @@ class Player : public BasePlayer {
     Animator m_playerAnimator;
 
     bool moving;
-    sf::Sound walkSound;
+    sf::Sound walk;
     sf::Sound shoot;
+    sf::Sound heal;
+    sf::Sound teleport;
+    
     bool s;
-
     bool alive;
     bool allowed_to_shoot;
 

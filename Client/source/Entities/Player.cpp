@@ -3,11 +3,17 @@
 Player::Player(std::string name) : BasePlayer(-1, 1, name), m_playerAnimator(&m_sprite) {
     m_speed = 0.3f;
 
-    this->walkSound.setBuffer(AssetManager::GetSoundBuffer("res/sound/step_short_fast.wav"));
-    this->walkSound.setVolume(35.f);
+    this->walk.setBuffer(AssetManager::GetSoundBuffer("res/sound/step_short_fast.wav"));
+    this->walk.setVolume(35.f);
 
     this->shoot.setBuffer(AssetManager::GetSoundBuffer("res/sound/gun_shot.wav"));
     this->shoot.setVolume(35.f);
+
+    this->heal.setBuffer(AssetManager::GetSoundBuffer("res/sound/heal.wav"));
+    this->heal.setVolume(35.f);
+
+    this->teleport.setBuffer(AssetManager::GetSoundBuffer("res/sound/teleport.wav"));
+    this->teleport.setVolume(35.f);
 
     moving = false;
 
@@ -109,13 +115,13 @@ void Player::setVelocity(sf::Vector2f vel) {
     }
 
     if (this->moving && !won) {
-        if (!this->walkSound.getLoop()) {
-            this->walkSound.setLoop(true);
-            this->walkSound.play();
+        if (!this->walk.getLoop()) {
+            this->walk.setLoop(true);
+            this->walk.play();
         }
     } else {
-        this->walkSound.setLoop(false);
-        this->walkSound.pause();
+        this->walk.setLoop(false);
+        this->walk.pause();
     }
 }
 
@@ -170,6 +176,14 @@ void Player::updateAttack() {
 
 void Player::shootSound() {
     this->shoot.play();
+}
+
+void Player::healSound() {
+    this->heal.play();
+}
+
+void Player::teleportSound() {
+    this->teleport.play();
 }
 
 int Player::getDirection() {

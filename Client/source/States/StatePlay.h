@@ -5,6 +5,8 @@
 #include "../Entities/Enemy.h"
 #include "../Entities/Player.h"
 #include "../Entities/Bullet.h"
+#include "../Entities/HealthKit.h"
+#include "../Entities/Teleport.h"
 #include "../GUI/GUI.h"
 #include "../GUI/TabOverlay.h"
 #include "../Managers/AssetManager.h"
@@ -29,8 +31,9 @@ class StatePlay : public State {
 
     void onConnect();
 
-    void updateCombat();
     void updateBullets();
+    void updateHealthkits();
+    void updateTeleports();
 
    private:
     void handleKeyboardInput(sf::Keyboard::Key& key, bool status);
@@ -44,6 +47,8 @@ class StatePlay : public State {
     Player m_player;
     std::vector<Enemy> m_enemies;
     std::vector<Bullet> m_bullets;
+    std::vector<HealthKit> m_healthkits;
+    std::vector<Teleport> m_teleports;
     GUI m_gui;
 
     sf::Vector2f m_oldVelocity;

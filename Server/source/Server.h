@@ -9,9 +9,9 @@
 #include <memory>
 #include <mutex>
 #include <queue>
-#include <thread>
-#include <sstream>
 #include <random>
+#include <sstream>
+#include <thread>
 // #include <format>
 
 #include "LevelManager.h"
@@ -33,7 +33,11 @@ enum SIGNAL_SEND {
     WON,
     GAME_WAIT,
     GAME_CD,
-    GAME_START
+    GAME_START,
+    HEALTHKITS,
+    TELEPORTS,
+    HEALED,
+    TELEPORTED
 };
 
 enum SIGNAL_RECEIVE {
@@ -46,8 +50,7 @@ enum SIGNAL_RECEIVE {
     BULLET_REC
 };
 
-typedef struct
-{
+typedef struct {
     sf::Vector2f pos;
     sf::Vector2f dir;
     int code;
@@ -56,6 +59,18 @@ typedef struct
     int bid;
     bool expired;
 } bullet_t;
+
+typedef struct {
+    sf::Vector2f pos;
+    int id;
+    bool expired;
+} healthkit_t;
+
+typedef struct {
+    sf::Vector2f pos;
+    int id;
+    bool expired;
+} teleport_t;
 
 class Server {
    public:
@@ -69,12 +84,19 @@ class Server {
 
     void updateTick();
     void updateBullets();
-    void removeExpiredBullets();
+    void updateHealthkits();
+    void updateTeleports();
+    void removeExpired();
     void updateDeadPlayers();
     void updateGame();
     void updateWorld(sf::Time dt);
 
+    sf::Vector2f getRandom();
     void shufflePlayers();
+    void setHealthkits();
+    void setTeleports();
+
+    bool intersectsCollision(float x, float y);
     void setPlayerList(std::vector<Player> *players);
 
    private:
@@ -90,10 +112,16 @@ class Server {
     int m_playersConnected;
     int m_currentPlayerId;
     int curBulletId;
+    int curHealthkitId;
+    int curTeleportId;
 
     std::vector<Player> *m_playerList = nullptr;
     std::vector<bullet_t> m_bullets;
+    std::vector<healthkit_t> m_healthkits;
+    std::vector<teleport_t> m_teleports;
     int curBuletsCount;
+    int curHealthkitsCount;
+    int curTeleportsCount;
     std::queue<sf::Packet> m_receivedPackets;
 
     char m_tmp[1400];

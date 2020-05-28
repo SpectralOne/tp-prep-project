@@ -5,7 +5,7 @@
 
 StateConnect::StateConnect(StateManager& machine, sf::RenderWindow& window, pInfo_t info, bool replace) : 
     State(machine, window, info, replace),
-    entry(400, 60, 46, "127.0.0.1:80") {
+    entry(400, 60, 42, "127.0.0.1:80") {
 
     background.setTexture(AssetManager::GetTexture("res/img/background_menu.jpg"));
     m_buttons.push_back(Button(sf::Vector2f(100, 100), sf::Vector2f(80, 60), "<="));

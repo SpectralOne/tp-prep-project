@@ -237,14 +237,14 @@ void StatePlay::onConnect() {
 //  CHECK: if resume not brake the game state
 //  after resume -> get last state -> update (save state)
 void StatePlay::handleKeyboardInput(sf::Keyboard::Key& key, bool status) {
-    if (key == sf::Keyboard::Escape && status && m_gui.chat.getStatus() != CHAT_STATUS::OPEN) {
+    if (key == InputManager::getKeyAction("TOGGLEMENU") && status && m_gui.chat.getStatus() != CHAT_STATUS::OPEN) {
         m_next = StateManager::build<StatePlayMenu>(m_machine, m_window, this->info, false);
     }
 
-    if (key == sf::Keyboard::Tab && status) {
+    if (key == InputManager::getKeyAction("SCORE") && status) {
         m_tabOverlay.setVisible(true);
     }
-    if (key == sf::Keyboard::Tab && !status) {
+    if (key == InputManager::getKeyAction("SCORE") && !status) {
         m_tabOverlay.setVisible(false);
     }
     if (key == InputManager::getKeyAction("CHAT") && status) {

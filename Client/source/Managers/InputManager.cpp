@@ -1,6 +1,8 @@
 #include "InputManager.h"
 
 #include <iostream>
+#include <fstream>
+
 InputManager* InputManager::sInstance = nullptr;
 
 InputManager::InputManager() {
@@ -9,38 +11,25 @@ InputManager::InputManager() {
 
     initMap();
 
-    //  FUTURE: change this to key bindings from settings
     m_mouseButtons[sf::Mouse::Left] = MouseButton();
     m_mouseButtons[sf::Mouse::Right] = MouseButton();
 
-    //  FUTURE: config parser
-    /*
-		unbindall
-		bind Tab "score"
-		bind Escape "togglemenu"
-		bind Return "chat"
-		bind A "moveleft"
-		bind D "moveright"
-		bind W "moveup"
-		bind S "movedown"
-		set r_resolution "1280x720"
-		set ui_show "true"
-	*/
+    readConfig();
+}
 
-    // Example of key bindings
-    /*
-		MOVE_UP W
-		MOVE_DOWN S
-		MOVE_LEFT A
-		MOVE_RIGHT D
-	*/
+void InputManager::readConfig() {
+    
+    std::ifstream file;
+    file.open("res/cfg/default.cfg");
 
-    m_actionMap["MOVE_UP"] = m_nameMap["W"];
-    m_actionMap["MOVE_DOWN"] = m_nameMap["S"];
-    m_actionMap["MOVE_LEFT"] = m_nameMap["A"];
-    m_actionMap["MOVE_RIGHT"] = m_nameMap["D"];
-    m_actionMap["CHAT"] = m_nameMap["Return"];
-    m_actionMap["SHOOT"] = m_nameMap["Space"];
+    std::string command, key, action;
+    while (file >> command >> key >> action) {
+        if (command == "bind") {
+            m_actionMap[action] = m_nameMap[key];
+        } else {
+            std::cout << "Unknown cfg command occured: " << command << std::endl;
+        }
+    }
 }
 
 void InputManager::setButtonClick(sf::Mouse::Button button, sf::Vector2i position) {

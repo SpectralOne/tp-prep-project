@@ -20,6 +20,7 @@ class InputManager {
     static void setButtonRelease(sf::Mouse::Button button, sf::Vector2i position);
     static MouseButton& getButton(sf::Mouse::Button button);
     static void reset();
+    void readConfig();
 
     // Keyboard
     static sf::Keyboard::Key getKeyAction(const std::string& key);
